@@ -1,0 +1,71 @@
+# Modified by smartbuilds.io
+# Date: 27.09.20
+# Desc: This scrtipt script..
+
+import cv2
+import imutils
+import time
+import numpy as np
+import sys
+
+cascPath = sys.argv[0]
+faceCascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+
+class VideoCamera(object):
+    def __init__(self, flip=False):
+        self.vs = cv2.VideoCapture(0)
+        self.flip = flip
+        time.sleep(2.0)
+
+    def __del__(self):
+        self.vs.stop()
+
+    def flip_if_needed(self, frame):
+        if self.flip:
+            return np.flip(frame, 0)
+        return frame
+
+    def get_frame(self):
+        i = 0
+        while self.vs.isOpened():
+            ret, frame = self.vs.read()
+
+            if not ret:
+                break
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            faces = faceCascade.detectMultiScale(
+                gray,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(30, 30),
+            )
+            for (x, y, w, h) in faces:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.imshow('Video', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+            cv2.imwrite('kang' + str(i) + '.jpg', frame)
+            ret1, jpeg = cv2.imencode('.jpg', frame)
+            i += 1
+            return jpeg.tobytes()
+
+    """
+
+    def get_frame(self):
+        if not self.vs.isOpened():
+            raise IOError("Cannot open webcam")
+        while True:
+            ret, frame = self.vs.read()
+            frame = cv2.resize(frame, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
+            cv2.imshow('Input', frame)
+
+            c = cv2.waitKey(1)
+            if c == 27:
+                break
+        self.vs.release()
+        cv2.destroyAllWindows()
+        return frame.tobytes()
+"""
